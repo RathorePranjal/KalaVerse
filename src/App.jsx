@@ -255,6 +255,7 @@ const CategoryGrid = ({ categories, t }) => (
 
 // --- ARTISAN DASHBOARD ---
 const ArtisanDashboard = ({ onNavigate, activeSubPage }) => {
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const pages = {
         dashboard: <DashboardOverview onNavigate={onNavigate} />,
         products: <ProductManagement onNavigate={onNavigate} />,
@@ -266,8 +267,13 @@ const ArtisanDashboard = ({ onNavigate, activeSubPage }) => {
     };
     return (
         <div className="flex min-h-[calc(100vh-80px)] bg-black">
-            <Sidebar onNavigate={onNavigate} activeSubPage={activeSubPage} />
-            <div className="flex-grow p-8 text-white ml-64">{pages[activeSubPage] || <DashboardOverview onNavigate={onNavigate} />}</div>
+            <Sidebar onNavigate={onNavigate} activeSubPage={activeSubPage} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+            <div className="flex-grow p-8 text-white md:ml-64">
+                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden mb-4 p-2 bg-gray-800 rounded-lg">
+                    <BarChart2 size={20} />
+                </button>
+                {pages[activeSubPage] || <DashboardOverview onNavigate={onNavigate} />}
+            </div>
         </div>
     );
 };
