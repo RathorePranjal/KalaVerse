@@ -6,10 +6,28 @@ import {
     LogOut, Package, Settings, LayoutDashboard, Wand2, ShieldCheck, DollarSign, MoreVertical, Trash2, Edit, 
     Save, Building, Mail, Link as LinkIcon, Search
 } from 'lucide-react';
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
 
 // --- MOCK DATA & CONFIG ---
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, ArcElement);
+
+// TODO: Add your Firebase configuration from your Firebase project settings
+// It's recommended to use environment variables for these values.
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 const mockData = {
   artisanProducts: [
@@ -146,9 +164,9 @@ const Header = ({ onNavigate, onLanguageChange, t, user, onLogout }) => (
                 <h1 className="text-3xl font-bold text-white cursor-pointer tracking-wider" onClick={() => onNavigate({ page: 'home' })}>Kalaverse</h1>
                  {user?.role === 'customer' && (
                     <div className="hidden md:flex items-center space-x-8">
-                        <a className="text-gray-300 hover:text-white transition font-medium cursor-pointer">Categories</a>
-                        <a className="text-gray-300 hover:text-white transition font-medium cursor-pointer">Deals</a>
-                        <a className="text-gray-300 hover:text-white transition font-medium cursor-pointer">New Arrivals</a>
+                        <button className="text-gray-300 hover:text-white transition font-medium">Categories</button>
+                        <button className="text-gray-300 hover:text-white transition font-medium">Deals</button>
+                        <button className="text-gray-300 hover:text-white transition font-medium">New Arrivals</button>
                     </div>
                 )}
                 <div className="flex items-center space-x-4">
@@ -259,6 +277,7 @@ const ArtisanDashboard = ({ onNavigate, activeSubPage }) => {
     const pages = {
         dashboard: <DashboardOverview onNavigate={onNavigate} />,
         products: <ProductManagement onNavigate={onNavigate} />,
+        addProduct: <AddProductPage onNavigate={onNavigate} />,
         orders: <OrderManagement />,
         customers: <CustomerManagement />,
         analytics: <AnalyticsPage />,
@@ -268,9 +287,9 @@ const ArtisanDashboard = ({ onNavigate, activeSubPage }) => {
     return (
         <div className="flex min-h-[calc(100vh-80px)] bg-black">
             <Sidebar onNavigate={onNavigate} activeSubPage={activeSubPage} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-            <div className="flex-grow p-8 text-white md:ml-64">
+            <div className="flex-grow p-4 sm:p-6 md:p-8 text-white md:ml-64 transition-all duration-300">
                 <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden mb-4 p-2 bg-gray-800 rounded-lg">
-                    <BarChart2 size={20} />
+                    <LayoutDashboard size={20} />
                 </button>
                 {pages[activeSubPage] || <DashboardOverview onNavigate={onNavigate} />}
             </div>
@@ -278,25 +297,31 @@ const ArtisanDashboard = ({ onNavigate, activeSubPage }) => {
     );
 };
 
-const Sidebar = ({ onNavigate, activeSubPage }) => {
+const Sidebar = ({ onNavigate, activeSubPage, sidebarOpen, setSidebarOpen }) => {
     const NavItem = ({ icon, label, page }) => (
-        <a onClick={() => onNavigate({ page: 'dashboard', subPage: page })}
+        <button
+           onClick={() => { onNavigate({ page: 'dashboard', subPage: page }); setSidebarOpen(false); }}
            className={`flex items-center gap-4 px-4 py-3 rounded-lg cursor-pointer transition-colors ${activeSubPage === page ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
             {icon} <span className="font-medium">{label}</span>
-        </a>
+        </button>
     );
     return (
-        <div className="w-64 bg-[#09090b] p-4 border-r border-gray-800 flex flex-col fixed h-full">
-            <nav className="flex flex-col gap-2">
-                <NavItem icon={<LayoutDashboard />} label="Dashboard" page="dashboard" />
-                <NavItem icon={<Package />} label="Products" page="products" />
-                <NavItem icon={<ShoppingCart />} label="Orders" page="orders" />
-                <NavItem icon={<Users />} label="Customers" page="customers" />
-                <NavItem icon={<BarChart2 />} label="Analytics" page="analytics" />
-                <NavItem icon={<MessageSquare />} label="AI Assistant" page="assistant" />
-            </nav>
-            <div className="mt-auto"><NavItem icon={<Settings />} label="Settings" page="settings" /></div>
-        </div>
+        <>
+            {/* Overlay for mobile */}
+            <div onClick={() => setSidebarOpen(false)} className={`fixed inset-0 bg-black/60 z-30 md:hidden transition-opacity ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}></div>
+            {/* Sidebar */}
+            <div className={`w-64 bg-[#09090b] p-4 border-r border-gray-800 flex flex-col fixed h-full z-40 transform transition-transform md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <nav className="flex flex-col gap-2">
+                    <NavItem icon={<LayoutDashboard />} label="Dashboard" page="dashboard" />
+                    <NavItem icon={<Package />} label="Products" page="products" />
+                    <NavItem icon={<ShoppingCart />} label="Orders" page="orders" />
+                    <NavItem icon={<Users />} label="Customers" page="customers" />
+                    <NavItem icon={<BarChart2 />} label="Analytics" page="analytics" />
+                    <NavItem icon={<MessageSquare />} label="AI Assistant" page="assistant" />
+                </nav>
+                <div className="mt-auto"><NavItem icon={<Settings />} label="Settings" page="settings" /></div>
+            </div>
+        </>
     );
 };
 
@@ -322,7 +347,7 @@ const DashboardOverview = ({ onNavigate }) => (
             <div className="lg:col-span-1 flex flex-col gap-8">
                 <Card><h3 className="text-xl font-semibold mb-4 text-white">Quick Actions</h3>
                     <div className="flex flex-col gap-4">
-                        <Button onClick={() => onNavigate({ page: 'addProduct' })}><PlusCircle size={20}/> Add New Product</Button>
+                        <Button onClick={() => onNavigate({ subPage: 'addProduct' })}><PlusCircle size={20}/> Add New Product</Button>
                         <Button onClick={() => onNavigate({ page: 'dashboard', subPage: 'assistant'})} variant="secondary"><MessageSquare size={20}/> Ask AI Assistant</Button>
                     </div>
                 </Card>
@@ -341,7 +366,7 @@ const ProductManagement = ({ onNavigate }) => (
     <div>
         <div className="flex justify-between items-center mb-8">
             <h1 className="text-4xl font-bold">My Products</h1>
-            <Button onClick={() => onNavigate({ page: 'addProduct' })}><PlusCircle size={20}/> Add New Product</Button>
+            <Button onClick={() => onNavigate({ subPage: 'addProduct' })}><PlusCircle size={20}/> Add New Product</Button>
         </div>
         <Card>
             <table className="w-full text-left">
@@ -500,7 +525,7 @@ const AddProductPage = ({ onNavigate }) => {
     };
     
     return (
-        <div className="flex-grow p-8 text-white">
+        <div>
              <h1 className="text-4xl font-bold mb-2">Product Listing Assistant</h1>
              <p className="text-gray-400 mb-8">Use our AI tools to create the perfect listing.</p>
 
@@ -575,12 +600,7 @@ export default function App() {
   const handleLogin = (userData) => { setUser(userData); setNavState(userData.role === 'artisan' ? { page: 'dashboard', subPage: 'dashboard' } : { page: 'home' }); };
   const handleLogout = () => { setUser(null); setNavState({ page: 'home' }); };
   const handleNavigate = (state) => {
-    if(state.page === 'addProduct' && user?.role === 'artisan') {
-        // Special case to render AddProductPage without the sidebar layout
-        setNavState(state);
-    } else {
-        setNavState(s => ({...s, ...state}));
-    }
+    setNavState(s => ({...s, ...state}));
   };
   
   const renderPage = () => {
@@ -595,12 +615,6 @@ export default function App() {
                 return <ArtisanDashboard onNavigate={handleNavigate} activeSubPage={navState.subPage} />;
             }
             return <CustomerHomePage onNavigate={handleNavigate} t={t} />;
-            
-        case 'addProduct':
-            if (user.role === 'artisan') {
-                 return <div className="flex min-h-[calc(100vh-80px)] bg-black"><Sidebar onNavigate={handleNavigate} activeSubPage={navState.subPage} /><AddProductPage onNavigate={handleNavigate} /></div>;
-            }
-             return <CustomerHomePage onNavigate={handleNavigate} t={t} />;
 
         case 'chatbot': 
             return <div className="p-8 bg-black h-[calc(100vh-80px)]"><ChatbotPage /></div>;
